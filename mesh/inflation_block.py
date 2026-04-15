@@ -42,11 +42,10 @@ Lref = 10.0e-3  # reference length [m]
 
 # multiblock parameters
 BLOCK_DIMENSIONAL = True                            # If True, dimensional values are input for MB_LENGTHS and MB_ORIGIN
-MB_DIMS = [24,8,6]                                  # number of blocks in each direction [nx,ny,nz] (NOTE: this can change cell count as functions adjust MB_NXYZ to fit cells evenly into blocks)
-# MB_LENGTHS = [100, 12.8885, 5.72822]              # ORIGINAL NON-DIM BLOCK SIZE (with injector, Lref = 1.25e-3), block only used half this size in each dimension
-# MB_LENGTHS = [0.05, 0.02, 0.005]
-# MB_LENGTHS = [50,2,0.5]
-MB_LENGTHS = np.array([200.0,100.0,50.0])*1e-3      # Dimensional block size [m]
+# MB_DIMS = [72,8,6]                                  # number of blocks in each direction [nx,ny,nz] (NOTE: this can change cell count as functions adjust MB_NXYZ to fit cells evenly into blocks)
+# MB_LENGTHS = np.array([600.0,100.0,50.0])*1e-3      # Dimensional block size [m]
+MB_DIMS = [24,8,6]
+MB_LENGTHS = np.array([200.0,100.0,50.0])*1e-3
 MB_NXYZ = [30,40,30]                                # number of nodes in each block in each direction [nx,ny,nz]
 MB_ORIGIN = [0.0,0.0,0.0]                           # origin of the multiblock domain [x0,y0,z0]
 
@@ -63,7 +62,7 @@ DIRECTION = 'y'
 #       scalar: same isotropic length in each direction (overrides MB_NXYZ)
 #       list: isotropic length in each direction [x,y,z] (overrides MB_NXYZ)
 #       None: fill based on MB_NXYZ
-ISO_LENGTH = np.array([100,2500,100])*FIRST_LAYER_THICKNESS 
+ISO_LENGTH = np.array([100,1000,100])*FIRST_LAYER_THICKNESS 
 # ISO_LENGTH = [100*FIRST_LAYER_THICKNESS, None, 100*FIRST_LAYER_THICKNESS ]
 # ISO_LENGTH = None #100.0*FIRST_LAYER_THICKNESS
 
@@ -72,7 +71,7 @@ BCS = ['u01','e02','s01','s02','s02','s02']    # [-x face, +x face, -y face, +y 
 
 # Output Options
 WRITE_VISUALIZATION = True
-OUTPUT_PATH = './grid_1152block_15mil/'
+OUTPUT_PATH = './grids/long_duct/'
 
 # =======================================================================
 #   CLASSES
@@ -246,7 +245,8 @@ def create_inflation_distribution(
             # If total nodes is specified, distribute remaining layers to satisfy total nodes
             if max_nodes is not None:
 
-                remaining_layers = max_nodes - len(layer_thicknesses)
+                remaining_layers = max_nodes - (len(layer_thicknesses) + 1) # +1 to account for first node at 0
+                # remaining_layers = max_nodes - len(layer_thicknesses)
 
                 # Correct remaining layers to be multiple of n_blocks
                 if n_blocks is not None:
@@ -476,7 +476,7 @@ def assign_cube_bcs(mb,bcs):
         '+z': '6'
     }
 
-    # Loop through each block and assign BCs
+    # Loop through each block and assign BCs (assumes 123 orientation)
     for blk in mb:
         for i,face in enumerate(['-x','+x','-y','+y','-z','+z']):
             face_id = face_indices[face]
@@ -577,7 +577,6 @@ def main():
     distribute_inflation_layers(mb, DIRECTION, layer_height)
     assign_cube_bcs(mb, BCS)
 
-    
     # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     # Output Grid
 
